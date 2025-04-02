@@ -10,6 +10,14 @@ else
 	echo "file is exist and  writable"
 fi
 #calculating the size of the source file and the free space in the destination
-source_size=$(du -sh "$source_name")
-destination_space=$(df -h "$destination_name")
-echo "source size is $source_size and the available space in the destination is $destination_space"
+source_size=$(du -s "$source_name"| awk '{print 1}')
+destination_space=$(df --output=avail "$destination_name"| tail -1)
+#if space is sufficient display stats and ask user to confirm with the operation
+if [[ "$source_size" -lt "$destination_space" ]]; then
+	echo "source size is $source_size KB and the available space in the destination is $destination_space KB"
+read -p "do you want to continue with the operation y/n?"
+#if there is not sufficient space print that and delete old files"
+else
+	echo "there is not enough space"
+	find "$destination_name" -type f -mtime +30 -exec rm -f {} \;
+fi
